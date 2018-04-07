@@ -7,8 +7,39 @@
     <title>Leaflet </title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.6.0/p5.js"></script>
     <script src="https://unpkg.com/mappa-mundi@0.0.5/dist/mappa.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.6.0/addons/p5.dom.js"></script>
+
+    <style>
+        /*#year-main-div{*/
+        /*float:left;*/
+        /*}*/
+        #year-main-div:after {
+            content: '\A';
+            white-space: pre;
+        }
+
+        .year {
+            float: left;
+        }
+
+        #month-main-div:before {
+            content: '\A';
+            white-space: pre;
+            margin-bottom: 10px;
+        }
+
+        /*#month-main-div {*/
+
+        /*display: block;*/
+
+        /*}*/
+        .month {
+            float: left;
+        }
+    </style>
 </head>
 <body>
+
 <script src="script.js"></script>
 </body>
 </html>

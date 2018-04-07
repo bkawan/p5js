@@ -15,6 +15,13 @@ let table;
 let minimumTourist;
 let maximumTourist;
 let tourists;
+let yearCheckBox;
+let years;
+let selectedYears = [];
+let months;
+let selectedMonths = [];
+
+// let selectedYearsAndMonths
 
 function preload() {
 
@@ -25,11 +32,53 @@ function preload() {
 
 function setup() {
     canvas = createCanvas(800, 700);
+    // textAlign(CENTER);
+    let divYear = createDiv('');
+    let years = createDiv('Year: ');
+    divYear.id('year-main-div');
+    years.parent('year-main-div');
+    years.class('year');
+
+
+    let divMonth = createDiv('');
+    let months = createDiv('Month: ');
+    divMonth.id('month-main-div');
+    months.parent('month-main-div');
+    months.class('month');
+
+
+    textSize(16)
+    textAlign(CENTER);
+    text('Year', 50, 50);
+    background(200);
 
     // Create a tile map and overlay the canvas on top.
     myMap = mappa.tileMap(options);
     myMap.overlay(canvas);
     console.log(table.rows[0].obj.Tourists);
+    years = [... new Set(table.rows.map(row => row.obj.Year))];
+    months = [... new Set(table.rows.map(row => row.obj.Month))];
+    for (i = 0; i < years.length; i++) {
+        yearCheckBox = createCheckbox(years[i], years[i]);
+        console.log(yearCheckBox)
+
+        // div.html(yearCheckBox.elt.innerHTML, true);
+        yearCheckBox.changed(yearCheckedEvent);
+        yearCheckBox.parent('year-main-div');
+        yearCheckBox.id(years[i]);
+        yearCheckBox.class('year');
+        yearCheckBox.value(years[i])
+    }
+    for (i = 0; i < months.length; i++) {
+        monthCheckBox = createCheckbox(months[i], months[i]);
+        monthCheckBox.changed(yearCheckedEvent);
+        monthCheckBox.parent('month-main-div');
+        monthCheckBox.id(months[i]);
+        monthCheckBox.class('month');
+        monthCheckBox.value(months[i])
+    }
+
+    console.log(years);
     tourists = table.rows.map(row => parseFloat(row.obj.Tourists));
     minimumTourist = Math.min(...tourists);
     maximumTourist = Math.max(...tourists);
@@ -44,6 +93,24 @@ function setup() {
 
 // The draw loop is fully functional but we are not using it for now.
 function draw() {
+}
+
+function yearCheckedEvent() {
+    var year = this.checked();
+    if (year) {
+        console.log(this);
+        let value = this.value();
+        console.log(value)
+        selectedYears.push(value);
+    } else {
+        let value = this.value();
+        let index = selectedYears.indexOf(value);
+        if (index > -1) {
+            selectedYears.splice(index, 1)
+        }
+    }
+    console.log(selectedYears)
+
 }
 
 function drawMap() {
