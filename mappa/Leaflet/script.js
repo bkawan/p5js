@@ -111,6 +111,7 @@ function yearCheckedEvent() {
         }
     }
     console.log(selectedYears);
+    myMap.onChange(drawMap);
 }
 
 function monthCheckedEvent() {
@@ -129,28 +130,36 @@ function monthCheckedEvent() {
         }
     }
     console.log(selectedMonths);
+    myMap.onChange(drawMap);
 }
 
 function drawMap() {
     // Clear the canvas
     clear();
+    console.log(table)
     for (var i = 0; i < table.getRowCount(); i++) {
         // Get the lat/lng of each Tourism
-        var latitude = Number(table.getString(i, 'Latitude'));
-        var longitude = Number(table.getString(i, 'Longitude'));
 
-        // Only draw them if the position is inside the current map bounds. We use a
-        // Leaflet method to check if the lat and lng are contain inside the current
-        // map. This way we draw just what we are going to see and not everything. See
-        // getBounds() in http://leafletjs.com/reference-1.1.0.html
-        if (myMap.map.getBounds().contains({lat: latitude, lng: longitude})) {
-            // Transform lat/lng to pixel position
-            var pos = myMap.latLngToPixel(latitude, longitude);
-            // Get the density of tourism and map it.
-            var size = table.getString(i, 'Tourists');
+        var year = table.getString(i, 'Year');
+        var month = table.getString(i, 'Month');
+        if (selectedYears.includes(year) && selectedMonths.includes(month)) {
 
-            size = map(size, minimumTourist, maximumTourist, 1, 10) + myMap.zoom();
-            ellipse(pos.x, pos.y, size, size);
+            var latitude = Number(table.getString(i, 'Latitude'));
+            var longitude = Number(table.getString(i, 'Longitude'));
+
+            // Only draw them if the position is inside the current map bounds. We use a
+            // Leaflet method to check if the lat and lng are contain inside the current
+            // map. This way we draw just what we are going to see and not everything. See
+            // getBounds() in http://leafletjs.com/reference-1.1.0.html
+            if (myMap.map.getBounds().contains({lat: latitude, lng: longitude})) {
+                // Transform lat/lng to pixel position
+                var pos = myMap.latLngToPixel(latitude, longitude);
+                // Get the density of tourism and map it.
+                var size = table.getString(i, 'Tourists');
+
+                size = map(size, minimumTourist, maximumTourist, 1, 10) + myMap.zoom();
+                ellipse(pos.x, pos.y, size, size);
+            }
         }
     }
 }
