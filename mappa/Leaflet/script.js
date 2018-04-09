@@ -57,11 +57,12 @@ function setup() {
     myMap.overlay(canvas);
     console.log(table.rows[0].obj.Tourists);
     years = [... new Set(table.rows.map(row => row.obj.Year))];
+    selectedYears = years;
     months = [... new Set(table.rows.map(row => row.obj.Month))];
+    selectedMonths = months;
     for (i = 0; i < years.length; i++) {
         yearCheckBox = createCheckbox(years[i], years[i]);
-        console.log(yearCheckBox)
-
+        console.log(yearCheckBox);
         // div.html(yearCheckBox.elt.innerHTML, true);
         yearCheckBox.changed(yearCheckedEvent);
         yearCheckBox.parent('year-main-div');
@@ -71,7 +72,7 @@ function setup() {
     }
     for (i = 0; i < months.length; i++) {
         monthCheckBox = createCheckbox(months[i], months[i]);
-        monthCheckBox.changed(yearCheckedEvent);
+        monthCheckBox.changed(monthCheckedEvent);
         monthCheckBox.parent('month-main-div');
         monthCheckBox.id(months[i]);
         monthCheckBox.class('month');
@@ -97,10 +98,10 @@ function draw() {
 
 function yearCheckedEvent() {
     var year = this.checked();
+    console.log(selectedYears);
     if (year) {
         console.log(this);
         let value = this.value();
-        console.log(value)
         selectedYears.push(value);
     } else {
         let value = this.value();
@@ -109,8 +110,25 @@ function yearCheckedEvent() {
             selectedYears.splice(index, 1)
         }
     }
-    console.log(selectedYears)
+    console.log(selectedYears);
+}
 
+function monthCheckedEvent() {
+    var month = this.checked();
+    console.log(selectedMonths);
+    if (month) {
+        console.log(this);
+        let value = this.value();
+        console.log(value)
+        selectedMonths.push(value);
+    } else {
+        let value = this.value();
+        let index = selectedMonths.indexOf(value);
+        if (index > -1) {
+            selectedMonths.splice(index, 1)
+        }
+    }
+    console.log(selectedMonths);
 }
 
 function drawMap() {
