@@ -55,14 +55,12 @@ function setup() {
     // Create a tile map and overlay the canvas on top.
     myMap = mappa.tileMap(options);
     myMap.overlay(canvas);
-    console.log(table.rows[0].obj.Tourists);
     years = [... new Set(table.rows.map(row => row.obj.Year))];
     selectedYears = years;
     months = [... new Set(table.rows.map(row => row.obj.Month))];
     selectedMonths = months;
     for (i = 0; i < years.length; i++) {
         yearCheckBox = createCheckbox(years[i], years[i]);
-        console.log(yearCheckBox);
         // div.html(yearCheckBox.elt.innerHTML, true);
         yearCheckBox.changed(yearCheckedEvent);
         yearCheckBox.parent('year-main-div');
@@ -79,7 +77,6 @@ function setup() {
         monthCheckBox.value(months[i])
     }
 
-    console.log(years);
     tourists = table.rows.map(row => parseFloat(row.obj.Tourists));
     minimumTourist = Math.min(...tourists);
     maximumTourist = Math.max(...tourists);
@@ -98,9 +95,8 @@ function draw() {
 
 function yearCheckedEvent() {
     var year = this.checked();
-    console.log(selectedYears);
     if (year) {
-        console.log(this);
+        // console.log(this);
         let value = this.value();
         selectedYears.push(value);
     } else {
@@ -136,7 +132,6 @@ function monthCheckedEvent() {
 function drawMap() {
     // Clear the canvas
     clear();
-    console.log(table)
     for (var i = 0; i < table.getRowCount(); i++) {
         // Get the lat/lng of each Tourism
 
@@ -146,6 +141,10 @@ function drawMap() {
 
             var latitude = Number(table.getString(i, 'Latitude'));
             var longitude = Number(table.getString(i, 'Longitude'));
+            var country = table.getString(i, 'Country');
+            var highestTemperature = table.getString(i, 'Temperature');
+            var lowestTemperature = table.getString(i, 'Temperature');
+            var totalTourists = table.getString(i, 'Tourists');
 
             // Only draw them if the position is inside the current map bounds. We use a
             // Leaflet method to check if the lat and lng are contain inside the current
@@ -156,9 +155,39 @@ function drawMap() {
                 var pos = myMap.latLngToPixel(latitude, longitude);
                 // Get the density of tourism and map it.
                 var size = table.getString(i, 'Tourists');
+                var latlng = myMap.fromPointToLatLng(pos.x, pos.y);
 
                 size = map(size, minimumTourist, maximumTourist, 1, 10) + myMap.zoom();
                 ellipse(pos.x, pos.y, size, size);
+                // var map = myMap.map;
+                // console.log(latlng)
+                let circle = L.circle(latlng, {
+                    color: 'green',
+                    fillOpacity: 0.0,
+                    opacity: 0.0
+
+                }).addTo(myMap.map);
+
+
+                let detail = `
+                <div>
+                    <strong>${country}</strong>
+                    <br>
+                    <strong>Highest Temperature: </strong>${highestTemperature}
+                    <br>
+                    <strong>Lowest Temperature: </strong>${lowestTemperature}
+                    <br>
+                    <strong>Number of Tourists: </strong>${totalTourists}
+                </div> 
+                `;
+                circle.bindPopup(detail);
+
+                circle.on('mouseover', function (e) {
+                    this.openPopup();
+                });
+                circle.on('mouseout', function (e) {
+                    this.closePopup();
+                });
             }
         }
     }
