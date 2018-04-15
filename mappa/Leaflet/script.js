@@ -5,23 +5,16 @@ var options = {
     zoom: 1.5,
     style: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png'
 }
+var checkbox;
 
 // Create an instance of Leaflet
 var mappa = new Mappa('Leaflet');
-
 var myMap;
+var table;
 var canvas;
-let table;
-let minimumTourist;
-let maximumTourist;
-let tourists;
-let yearCheckBox;
-let years;
-let selectedYears = [];
-let months;
-let selectedMonths = [];
-
-// let selectedYearsAndMonths
+var yearCheckBox;
+var monthCheckBox;
+var data = {};
 
 function preload() {
 
@@ -32,22 +25,37 @@ function preload() {
 
 function setup() {
     canvas = createCanvas(800, 700);
-    // textAlign(CENTER);
-    let divYear = createDiv('');
-    let years = createDiv('Year: ');
+
+
+    for (var i = 0; i < table.getRowCount(); i++) {
+        var country = table.getString(i, 'Country');
+        var temperature = Number(table.getString(i, 'Temperature'));
+        var tourists = Number(table.getString(i, 'Tourists'));
+
+
+        try {
+            data[country]['temp'].push(temperature);
+            data[country]['totalTourist'] += tourists;
+        } catch (err) {
+            data[country] = {
+                temp: [temperature],
+                totalTourist: tourists,
+            };
+        }
+    }
+    var divYear = createDiv('');
+    var years = createDiv('Year: ');
     divYear.id('year-main-div');
     years.parent('year-main-div');
     years.class('year');
 
-
-    let divMonth = createDiv('');
-    let months = createDiv('Month: ');
+    var divMonth = createDiv('');
+    var months = createDiv('Month: ');
     divMonth.id('month-main-div');
     months.parent('month-main-div');
     months.class('month');
 
-
-    textSize(16)
+    textSize(16);
     textAlign(CENTER);
     text('Year', 50, 50);
     background(200);
@@ -55,10 +63,13 @@ function setup() {
     // Create a tile map and overlay the canvas on top.
     myMap = mappa.tileMap(options);
     myMap.overlay(canvas);
-    years = [... new Set(table.rows.map(row => row.obj.Year))];
+    years = table.rows.map(row => row.obj.Year);
+    years = years.unique();
     selectedYears = years;
-    months = [... new Set(table.rows.map(row => row.obj.Month))];
+    months = table.rows.map(row => row.obj.Month);
+    months = months.unique();
     selectedMonths = months;
+
     for (i = 0; i < years.length; i++) {
         yearCheckBox = createCheckbox(years[i], years[i]);
         // div.html(yearCheckBox.elt.innerHTML, true);
@@ -77,12 +88,11 @@ function setup() {
         monthCheckBox.value(months[i])
     }
 
-    tourists = table.rows.map(row => parseFloat(row.obj.Tourists));
-    minimumTourist = Math.min(...tourists);
-    maximumTourist = Math.max(...tourists);
 
+    // Load the data
+    //table = loadTable('data.csv', 'csv', 'header');
 
-    // Only redraw the meteorites when the map change and not every frame.
+    // Only redraw the table when the map change and not every frame.
     myMap.onChange(drawMap);
 
     fill(70, 203, 31);
@@ -93,15 +103,80 @@ function setup() {
 function draw() {
 }
 
+function drawMap() {
+    // Clear the canvas
+    clear();
+
+    for (var i = 0; i < table.getRowCount(); i++) {
+
+        var year = table.getString(i, 'Year');
+        var month = table.getString(i, 'Month');
+        if (selectedYears.includes(year) && selectedMonths.includes(month)) {
+            // Get the lat/lng of each map
+            var latitude = Number(table.getString(i, 'Latitude'));
+            var longitude = Number(table.getString(i, 'Longitude'));
+            var country = table.getString(i, 'Country');
+
+            // Only draw them if the position is inside the current map bounds. We use a
+            // Leaflet method to check if the lat and lng are contain inside the current
+            // map. This way we draw just what we are going to see and not everything. See
+            // getBounds() in http://leafletjs.com/reference-1.1.0.html
+            if (myMap.map.getBounds().contains({lat: latitude, lng: longitude})) {
+                // Transform lat/lng to pixel position
+                var pos = myMap.latLngToPixel(latitude, longitude);
+                // Get the size of the map and map it. 60000000 is the mass of the largest
+                var size = table.getString(i, 'Tourists');
+                size = map(size, 558, 60000000, 1, 25) + myMap.zoom();
+                var latlng = myMap.fromPointToLatLng(pos.x, pos.y);
+
+                ellipse(pos.x, pos.y, size, size);
+                var circle = L.circle(latlng, {
+                    color: 'green',
+                    fillOpacity: 0.0,
+                    opacity: 0.0
+
+                }).addTo(myMap.map);
+
+                var detail = "\
+                <div>\
+                    <strong>" + country + "</strong>\
+                    <br>\
+                    <strong>Highest Temperature: </strong>" + Math.max.apply(null, data[country]['temp']) + "\
+                    <br>\
+                    <strong>Lowest Temperature: </strong>" + Math.min.apply(null, data[country]['temp']) + "\
+                    <br>\
+                    <strong>Number of Tourists: </strong>" + data[country]['totalTourist'] + "\
+                </div>";
+                circle.bindPopup(detail);
+
+                circle.on('mouseover', function (e) {
+                    this.openPopup();
+                });
+                circle.on('mouseout', function (e) {
+                    this.closePopup();
+                });
+
+            }
+        }
+    }
+}
+
+Array.prototype.unique = function () {
+    return this.filter(function (value, index, self) {
+        return self.indexOf(value) === index;
+    });
+};
+
+
 function yearCheckedEvent() {
     var year = this.checked();
     if (year) {
         // console.log(this);
-        let value = this.value();
+        var value = this.value();
         selectedYears.push(value);
     } else {
-        let value = this.value();
-        let index = selectedYears.indexOf(value);
+        var value = this.value();
+        var index = selectedYears.indexOf(value);
         if (index > -1) {
             selectedYears.splice(index, 1)
         }
@@ -115,80 +190,16 @@ function monthCheckedEvent() {
     console.log(selectedMonths);
     if (month) {
         console.log(this);
-        let value = this.value();
-        console.log(value)
+        var value = this.value();
+        console.log(value);
         selectedMonths.push(value);
     } else {
-        let value = this.value();
-        let index = selectedMonths.indexOf(value);
+        var value = this.value();
+        var index = selectedMonths.indexOf(value);
         if (index > -1) {
             selectedMonths.splice(index, 1)
         }
     }
     console.log(selectedMonths);
     myMap.onChange(drawMap);
-}
-
-function drawMap() {
-    // Clear the canvas
-    clear();
-    for (var i = 0; i < table.getRowCount(); i++) {
-        // Get the lat/lng of each Tourism
-
-        var year = table.getString(i, 'Year');
-        var month = table.getString(i, 'Month');
-        if (selectedYears.includes(year) && selectedMonths.includes(month)) {
-
-            var latitude = Number(table.getString(i, 'Latitude'));
-            var longitude = Number(table.getString(i, 'Longitude'));
-            var country = table.getString(i, 'Country');
-            var highestTemperature = table.getString(i, 'Temperature');
-            var lowestTemperature = table.getString(i, 'Temperature');
-            var totalTourists = table.getString(i, 'Tourists');
-
-            // Only draw them if the position is inside the current map bounds. We use a
-            // Leaflet method to check if the lat and lng are contain inside the current
-            // map. This way we draw just what we are going to see and not everything. See
-            // getBounds() in http://leafletjs.com/reference-1.1.0.html
-            if (myMap.map.getBounds().contains({lat: latitude, lng: longitude})) {
-                // Transform lat/lng to pixel position
-                var pos = myMap.latLngToPixel(latitude, longitude);
-                // Get the density of tourism and map it.
-                var size = table.getString(i, 'Tourists');
-                var latlng = myMap.fromPointToLatLng(pos.x, pos.y);
-
-                size = map(size, minimumTourist, maximumTourist, 1, 10) + myMap.zoom();
-                ellipse(pos.x, pos.y, size, size);
-                // var map = myMap.map;
-                // console.log(latlng)
-                let circle = L.circle(latlng, {
-                    color: 'green',
-                    fillOpacity: 0.0,
-                    opacity: 0.0
-
-                }).addTo(myMap.map);
-
-
-                let detail = `
-                <div>
-                    <strong>${country}</strong>
-                    <br>
-                    <strong>Highest Temperature: </strong>${highestTemperature}
-                    <br>
-                    <strong>Lowest Temperature: </strong>${lowestTemperature}
-                    <br>
-                    <strong>Number of Tourists: </strong>${totalTourists}
-                </div> 
-                `;
-                circle.bindPopup(detail);
-
-                circle.on('mouseover', function (e) {
-                    this.openPopup();
-                });
-                circle.on('mouseout', function (e) {
-                    this.closePopup();
-                });
-            }
-        }
-    }
 }
